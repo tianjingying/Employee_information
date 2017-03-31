@@ -2,9 +2,8 @@ import re
 import csv
 import time
 
-
 def get_row_counts():
-# 获取信息表中记录的数量
+    # 获取信息表中记录的数量
     f_rd = open('staff_table.csv', 'r',encoding="utf-8")
     readlines = csv.reader(f_rd)
     line_count = 0
