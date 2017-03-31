@@ -256,9 +256,14 @@ def where_parse(where_str):
     return res
 
 def re_update_sql(sql_str):
-    sql_re = re.search("select\s(?P<select>.*)\sfrom(?P<table>.*)\s+where\s+(?P<where>.*)", sql, flags=re.I)
-    pass
+    # UPDATE staff_table SET dept="Market" WHERE  dept = IT
+    sql_re = re.search("update\s(?P<table>.*)\sset(?P<set>.*)\s+where\s+(?P<where>.*)", sql_str, flags=re.I)
+    sql_dict = sql_re.groupdict()
+    return  sql_dict
 
+
+def update_record_msg(sql_dict, res_where ,table_msg):
+    pass
 
 if __name__ == '__main__':
     item_menus = ("创建员工记录","查询","修改","删除")
@@ -280,9 +285,18 @@ if __name__ == '__main__':
                     res_where = None
                 if  sql_dict:
                     table_records = get_records_msg_for_search(sql_dict , res_where)
-            elif  input_item == 2:
+            elif  input_item == 3:
                 sql_str = input("请输入要修改的sql 语句 :  ").strip()
                 sql_dict = re_update_sql(sql_str)
+                print("sql_dict11: %s" % sql_dict)
+                if "set" in sql_dict:
+                    sql_dict["set"] = three_parse(sql_dict["set"])
+                if "where" in sql_dict:
+                    res_where = where_parse(sql_dict["where"])
+                    print("res_where : %s"%res_where)
+                    table_msg = get_record_count_and_column_location()
+                    update_record_msg(sql_dict, res_where ,table_msg)
+                print("sql_dict: %s"%sql_dict)
         else:
             print("请输入数字")
 
