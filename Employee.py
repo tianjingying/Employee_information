@@ -275,6 +275,7 @@ if __name__ == '__main__':
             input_item = int(input_item)
             if input_item == 1:
                 create_record()
+
             elif input_item == 2:
                 sql_str = input("请输入要查询的sql 语句 :  ").strip()
                 sql_dict = get_search_condition(sql_str)
@@ -285,18 +286,27 @@ if __name__ == '__main__':
                     res_where = None
                 if  sql_dict:
                     table_records = get_records_msg_for_search(sql_dict , res_where)
+           
             elif  input_item == 3:
                 sql_str = input("请输入要修改的sql 语句 :  ").strip()
                 sql_dict = re_update_sql(sql_str)
                 print("sql_dict11: %s" % sql_dict)
                 if "set" in sql_dict:
-                    sql_dict["set"] = three_parse(sql_dict["set"])
+                    # 'set': [[' dept', '=', '"Market" '], [' phone', '=', '11123 ']]
+                    # --> 'set':[{"dept":"Market"} ,{"phone":"11123"},{...},... ]
+                    setlist = sql_dict["set"].split(",")
+                    sql_dict["set"] = []
+                    for i in range(len(setlist)):
+                        set = three_parse(setlist[i])
+                        sql_dict["set"].append(set)
+                    print("sql_dict--22: %s" % sql_dict)
                 if "where" in sql_dict:
                     res_where = where_parse(sql_dict["where"])
                     print("res_where : %s"%res_where)
                     table_msg = get_record_count_and_column_location()
                     update_record_msg(sql_dict, res_where ,table_msg)
                 print("sql_dict: %s"%sql_dict)
+
         else:
             print("请输入数字")
 
