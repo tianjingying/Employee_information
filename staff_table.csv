@@ -1,1 +1,5 @@
-staffid,name,age,phone,dept,enroll_date0,zhangsan,23,110,it,2017/03/16 00:14:501,zhangsan,22,111,it,2017/03/18 12:13:262,lisi,23,1123,it,2017/03/18 12:17:443,wwee,21,110106,ee,2017/03/27 11:43:47
+staffid,name,age,phone,dept,enroll_date
+0,zhangsan,23,110,it,2017/03/16 00:14:50
+2,lisi,23,1123,it,2017/03/18 12:17:44
+3,wwee,33,110106,abv,2017/03/27 11:43:47
+4,t1,22,3321,it,2017/04/02 16:34:13

@@ -1,6 +1,7 @@
 import re
 import csv
 import time
+import shutil
 
 def get_row_counts():
     # 获取信息表中记录的数量
@@ -11,7 +12,6 @@ def get_row_counts():
         if len(line) > 0:
             line_count += 1
     f_rd.close()
-    print("count : %s"%line_count)
     return line_count
 
 
@@ -29,11 +29,9 @@ def get_record_count_and_column_location():
             count += 1
     f_rd.close()
     result["count"] = count - 1
-    # print(result)
     return result
 
 def get_records_msg(table_msg , *column_names ):
-    print(column_names)
     f_rd = open('staff_table.csv', 'r', encoding="utf-8")
     readlines = csv.reader(f_rd)
     count = 0
@@ -64,7 +62,6 @@ def create_record():
     table_msg = get_record_count_and_column_location()
     record_list = []
     table_records = get_records_msg(table_msg, "staffid","phone"  )
-    print("table_records: %s"%table_records)
     if "staffid" in table_records and len( table_records["staffid"] ) > 0 :
         #有记录, staffid 自增
         staffid_str = int( table_records["staffid"].pop() )  + 1
@@ -110,11 +107,9 @@ def get_search_condition(sql):
                 sql_re = re.search("select\s(?P<select>.*)\sfrom(?P<table>.*)", sql, flags=re.I)
     else:
         sql_re = None
-    print("sql_re : %s"%sql_re)
 
     if  sql_re:
         sql_dict = sql_re.groupdict()
-        print("sql_dict : %s" % sql_dict)
         return sql_dict
     else:
         print("查询语句输入错误，请重新输入")
@@ -122,7 +117,6 @@ def get_search_condition(sql):
 
 def where_action(line , where_list , table_msg ):
     # 根据 where 子句找出符合条件的记录
-    # print("line:%s"%line)
     res = []
     for i in  range(len(where_list)):
         if type(where_list[i]) is not list:
@@ -140,25 +134,19 @@ def where_action(line , where_list , table_msg ):
                     exp_k = "'%s'"%line[table_msg[exp_k]]
                     exp_v = "'%s'" % exp_v
                 exp = "%s%s%s"%(exp_k , opt , exp_v)
-                # print("exp :%s"%exp)
                 res.append(str(eval("%s%s%s"%(exp_k , opt , exp_v) )))
             else:
-                # print("exp_v : %s"%exp_v)
-                # print("line_value : %s" % line[table_msg[exp_k]])
                 if exp_v  in  line[table_msg[exp_k]]:
                     res.append("True")
                 else:
                     res.append("False")
-    # print("res: %s"%res)
     result = eval( (' ').join(res) )
-    # print("result:%s"%result)
     return result
 
 
 
 def get_records_msg_for_search( sql_dict , where_list ):
     table_msg = get_record_count_and_column_location()
-    print("table_msg : %s"%table_msg)
     column_list = sql_dict["select"].split(",")
     for i in range(len(column_list)):
         #去掉多余的空各位
@@ -170,8 +158,6 @@ def get_records_msg_for_search( sql_dict , where_list ):
         if column_list[0].find("*")  >= 0:
             #查询 *  ，则查询所有字段
             column_list = ["staffid" , "name","age","phone","dept","enroll_date"]
-
-    print("column_list : %s" % column_list)
 
     f_rd = open('staff_table.csv', 'r', encoding="utf-8")
     readlines = csv.reader(f_rd)
@@ -224,16 +210,13 @@ def three_parse(exp_str):
         # 有 like
         res = res[0].split("like")
         res.insert(1,"like")
-    # print("res: %s"%res)
     return res
 
 def where_parse(where_str):
     # where 子句的解析
     # age >= 22 and dept = "it"' -->  ['age>=22', 'and', 'dept="it"']
     #     -->  [['age','>=','22'], 'and', ['dept', '=' ,'it']]
-    print("where_str : %s"%type(where_str))
     where_list = where_str.split(" ")
-    print("where_list : %s"%where_list)
     res = []
     key = ["and" , "or","not"]
     char = ""
@@ -252,7 +235,6 @@ def where_parse(where_str):
     else:
         char = three_parse(char)
         res.append(char)
-    print("res:%s"%res)
     return res
 
 def re_update_sql(sql_str):
@@ -276,19 +258,13 @@ def set_parse(set_str):
             set_dict["column"] = set_tmp[0].strip()
             set_dict["value"] = set_tmp[2].strip()
             res.append(set_dict)
-    print("set res: %s"%res)
     return res
 
 def set_action(line , set_list , table_msg):
-    print("line: %s"%line)
-    print("set_list : %s"%set_list)
-    print("table_msg: %s"%table_msg)
     for item in set_list:
         line[table_msg[item["column"]]] = item["value"]
 
 def update_record_msg(sql_dict , table_msg):
-    print("IN update_record_msg")
-    print("sql_dict 11: %s"%sql_dict)
     f_rd = open('staff_table.csv', 'r', encoding="utf-8")
     f_tmp = open('staff_table_tmp.csv', 'w', encoding="utf-8")
     readlines = csv.reader(f_rd)
@@ -297,11 +273,9 @@ def update_record_msg(sql_dict , table_msg):
     for line in readlines:
         if len(line) > 0:
             len_data = []
-            # print("line: %s"%line)
             if "where" in sql_dict:
                 if count > 0:
                     where_res = where_action(line, sql_dict["where"], table_msg)
-                    # print("where_res : %s"%where_res)
                     if where_res:
                         # 符合where 子句条件的
                         set_res = set_action(line, sql_dict["set"], table_msg)
@@ -311,6 +285,30 @@ def update_record_msg(sql_dict , table_msg):
 
     f_rd.close()
     f_tmp.close()
+    shutil.move("staff_table_tmp.csv", "staff_table.csv")
+
+def delete_record(staffid):
+    #删除记录
+    f_rd = open('staff_table.csv', 'r', encoding="utf-8")
+    f_tmp = open('staff_table_tmp.csv', 'w', encoding="utf-8")
+    table_msg = get_record_count_and_column_location()
+    readlines = csv.reader(f_rd)
+    writer = csv.writer(f_tmp)
+    count = 0
+    for line in readlines:
+        if len(line) > 0:
+            len_data = []
+            if count > 0:
+                if line[table_msg["staffid"]] == staffid:
+                    continue
+            len_data.append(line)
+            writer.writerows(len_data)
+        count += 1
+
+    f_rd.close()
+    f_tmp.close()
+    shutil.move("staff_table_tmp.csv", "staff_table.csv")
+    pass
 
 if __name__ == '__main__':
     item_menus = ("创建员工记录","查询","修改","删除")
@@ -349,11 +347,12 @@ if __name__ == '__main__':
                 else:
                     print("sql 输入错误")
 
+            elif input_item == 4:
+                staffid = input("请输入要删除的记录id : ").strip()
+                delete_record(staffid)
+
         else:
             print("请输入数字")
-
-
-
 
 
 
