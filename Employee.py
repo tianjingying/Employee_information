@@ -279,8 +279,38 @@ def set_parse(set_str):
     print("set res: %s"%res)
     return res
 
-def update_record_msg(sql_dict, res_where ,table_msg):
-    pass
+def set_action(line , set_list , table_msg):
+    print("line: %s"%line)
+    print("set_list : %s"%set_list)
+    print("table_msg: %s"%table_msg)
+    for item in set_list:
+        line[table_msg[item["column"]]] = item["value"]
+
+def update_record_msg(sql_dict , table_msg):
+    print("IN update_record_msg")
+    print("sql_dict 11: %s"%sql_dict)
+    f_rd = open('staff_table.csv', 'r', encoding="utf-8")
+    f_tmp = open('staff_table_tmp.csv', 'w', encoding="utf-8")
+    readlines = csv.reader(f_rd)
+    writer = csv.writer(f_tmp)
+    count = 0
+    for line in readlines:
+        if len(line) > 0:
+            len_data = []
+            # print("line: %s"%line)
+            if "where" in sql_dict:
+                if count > 0:
+                    where_res = where_action(line, sql_dict["where"], table_msg)
+                    # print("where_res : %s"%where_res)
+                    if where_res:
+                        # 符合where 子句条件的
+                        set_res = set_action(line, sql_dict["set"], table_msg)
+            len_data.append(line)
+            writer.writerows(len_data)
+        count += 1
+
+    f_rd.close()
+    f_tmp.close()
 
 if __name__ == '__main__':
     item_menus = ("创建员工记录","查询","修改","删除")
@@ -299,7 +329,6 @@ if __name__ == '__main__':
                 if sql_dict:
                     if "where" in sql_dict:
                         res_where = where_parse(sql_dict["where"])
-                        print("res_where : %s"%res_where)
                     else:
                         res_where = None
                     if  sql_dict:
@@ -311,12 +340,11 @@ if __name__ == '__main__':
                 print("sql_dict11: %s" % sql_dict)
                 if sql_dict:
                     if "set" in sql_dict:
-                        res = set_parse(sql_dict["set"])
+                        sql_dict["set"] = set_parse(sql_dict["set"])
                     if "where" in sql_dict:
-                        res_where = where_parse(sql_dict["where"])
-                        print("res_where : %s"%res_where)
+                        sql_dict["where"] = where_parse(sql_dict["where"])
                         table_msg = get_record_count_and_column_location()
-                        update_record_msg(sql_dict, res_where ,table_msg)
+                        update_record_msg(sql_dict ,table_msg)
                     print("sql_dict: %s"%sql_dict)
                 else:
                     print("sql 输入错误")
